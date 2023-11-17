@@ -13,21 +13,21 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class Predictor:
-    def __init__(self, seed: int):
+    def __init__(self):
         self.pipe = self._load_model()
-        self.seed = seed
 
     def _load_model(self):
         model = DiffusionPipeline.from_pretrained("SimianLuo/LCM_Dreamshaper_v7", 
                                           local_files_only=True)
 
         # To save GPU memory, torch.float16 can be used, but it may compromise image quality.
-        model.to(torch_device="cpu", torch_dtype=torch.float32).to('mps:0')
+        model.to(torch_device="mps", torch_dtype=torch.float32).to('mps:0')
         model.enable_attention_slicing()
         return model
     
-    def predict(self, prompt: str, negative_prompt: str):
-        torch.manual_seed(self.seed)
+    def predict(self, prompt: str, negative_prompt: str, seed: int):
+        seed = seed or int.from_bytes(os.urandom(2), "big")
+        torch.manual_seed(seed)
 
         # Can be set to 1~50 steps. LCM support fast inference even <= 4 steps. Recommend: 1~8 steps.
         num_inference_steps = 4
@@ -43,7 +43,7 @@ class Predictor:
                         output_type="pil").images
         
         return {
-            "seed": self.seed,
+            "seed": seed,
             "prompt": prompt,
             "negative_prompt": negative_prompt,
             "images": images
@@ -51,8 +51,8 @@ class Predictor:
     
     def save(self, prediction):
       timestamp = time.strftime("%Y%m%d-%H%M%S")
-      output_dir = f'output/{timestamp}-{self.seed}'
-      print(output_dir)
+      output_dir = f'output/{timestamp}-{prediction["seed"]}'
+      print(f'\n{output_dir}\n\n')
       if not os.path.exists(output_dir):
           os.makedirs(output_dir)
 
@@ -83,17 +83,15 @@ def parse_args():
 
 def main():
     args = parse_args()
-    seed = args.seed or int.from_bytes(os.urandom(2), "big")
-    print(f'Using seed {seed}')
-
-    predictor = Predictor(seed)
+    predictor = Predictor()
 
     prompts = prompt_match(args.prompt, args.negprompt)
     for p, np in prompts:
-        print(f'\n{args}\n')
-
+        print(f'Processing: (p={p}, np={np}, seed={args.seed})\n\n')
         prediction = predictor.predict(prompt = p,
-                                negative_prompt = np)
+                                      negative_prompt = np,
+                                      seed=args.seed)
+
         predictor.save(prediction=prediction)
 
 if __name__ == "__main__":
