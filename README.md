@@ -1,5 +1,5 @@
 # Latent Consistency Models
-Generate images based on text prompts. LCM can generate high-quality images in very short inference time.
+Generate images based on text prompts. LCM can generate high-quality images in a very short inference time.
 
 Inspired by [Generate images in one second on your Mac using a latent consistency model](https://replicate.com/blog/run-latent-consistency-model-on-mac) and using [Latent Consistency Models](https://huggingface.co/SimianLuo/LCM_Dreamshaper_v7)
 
@@ -20,9 +20,13 @@ source .venv/bin/activate
 python main.py --help
 
 python main.py \
-  -p "close view of a big orange-grey country house with a broken walls and mold, brush stroke style, 8k" \
-  -np "tree, green"
+  -p "close view of a big orange-grey country house with a chimney, photorealistic style, 8k" \
+  -np "green"
 ```
+
+Check the results on `output` folder.
+
+![](./sample.png)
 
 ## Model Download
 The model will be downloaded to `~/.cache/huggingface`.
